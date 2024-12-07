@@ -16,6 +16,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,8 +30,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import imagescraper.composeapp.generated.resources.Res
-import imagescraper.composeapp.generated.resources.compose_multiplatform
 import imagescraper.composeapp.generated.resources.placeholder
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 
@@ -38,12 +39,20 @@ import org.jetbrains.compose.resources.painterResource
 fun ImagesScraperApp() {
     val scope = rememberCoroutineScope()
     var urlTxtFieldValue by remember {
-        mutableStateOf(TextFieldValue("https://www.pexels.com/search/nature/"))
+        mutableStateOf(TextFieldValue("https://www.skool.com/android-devs"))
     }
     var imageUrls by remember {
         mutableStateOf<List<String>>(emptyList())
     }
     var loading by remember { mutableStateOf<Boolean?>(null) }
+
+    val httpClient by remember { mutableStateOf(HttpClient()) }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            httpClient.close()
+        }
+    }
 
     MaterialTheme {
         Column(
@@ -91,6 +100,21 @@ fun ImagesScraperApp() {
                     "${imageUrls.size} images found",
                     style = MaterialTheme.typography.subtitle2
                 )
+            }
+
+            if (imageUrls.isNotEmpty()) {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            saveImages(
+                                client = httpClient,
+                                urls = imageUrls
+                            )
+                        }
+                    }
+                ) {
+                    Text("Save all images")
+                }
             }
 
             LazyVerticalStaggeredGrid(
